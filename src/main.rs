@@ -18,8 +18,9 @@ fn main() {
         exit(1);
     }
     dbg!(args.get(2).unwrap().as_str());
-    let native_target = if args.get(2).is_none() {"c"}
-    else {
+    let native_target = if args.get(2).is_none() {
+        "c"
+    } else {
         match args.get(2).unwrap().as_str() {
             "cpp" | "cxx" | "cc" => ".cpp",
             "m" | "obj" | "objective-c" => ".m",
@@ -35,6 +36,7 @@ fn main() {
     }
     // let file_contents = file_contents_result.unwrap();
     // just in case
+
     let javac_result = Command::new("javac")
         .arg("-h")
         .arg(".")
