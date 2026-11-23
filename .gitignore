@@ -5,3 +5,5 @@
 *.h
 *.class
 *.c
+*.cpp
+*.m
