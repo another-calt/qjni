@@ -7,6 +7,7 @@ use std::{
 };
 
 mod args;
+mod build;
 
 fn main() {
     let args = args::Args::parse(); // theyre args, if you couldnt tell
@@ -18,17 +19,20 @@ fn main() {
         exit(1);
     }
 
-    // locate build file
-    let native_target_extension = args.format.unwrap_or(".c".to_string());
-    let sperator = if native_target_extension.contains('.') {
-        ""
+    // determin output file format
+    let args_format = args.format.unwrap_or(".c".to_string());
+    let native_target_extension = if args_format.contains('.') {
+        args_format
     } else {
-        "."
+        ".".to_owned() + &args_format
     };
+
+    // it doesnt stop you from making any file extension
+    // and i think thats fine to keep in
+
     let native_file_name = args
         .output_name
         .unwrap_or(target_file.split(".java").collect())
-        + sperator
         + &native_target_extension;
 
     // is this the real life
@@ -62,39 +66,18 @@ fn main() {
         fs::read_to_string(&header_target).expect("\x1b[1;31merror\x1b[0m: header file not found");
 
     // build the final file
-    for line in header_file_contents.lines() {
-        if (line.contains("JNIEXPORT ") & line.contains(" JNICALL Java_"))
-            | line.contains("  (JNIEnv *, jobject")
-        {
-            if line.contains("  (JNIEnv *, jobject") {
-                fs::write( // WRITE FOR PARAMETERS
-                    &native_file_name,
-                    format!(
-                        "{}{}\n",
-                        fs::read_to_string(&native_file_name).expect(
-                            "\x1b[1;31merror\x1b[0m:  failed to read header file when building"
-                        ),
-                        line.replace(";", " {\n\n}")
-                    ),
-                )
-                .expect("\x1b[1;31merror\x1b[0m: failed to write line when building");
-            } else { 
-                fs::write( // WRITE FOR DECLARATION
-                    &native_file_name,
-                    format!(
-                        "{}\n{}",
-                        fs::read_to_string(&native_file_name).expect(
-                            "\x1b[1;31merror\x1b[0m:  failed to read header file when building"
-                        ),
-                        line.replace(";", " {\n\n}")
-                    ),
-                )
-                .expect("\x1b[1;31merror\x1b[0m: failed to write line when building");
-            }
+    match native_target_extension.as_str() {
+        ".c" | ".cpp" | ".cxx" | ".cc" | ".m" => {
+            build::buildCCpp(&header_file_contents, &native_file_name.clone());
         }
+        ".zig" => println!(
+            "\x1b[1;31merror\x1b[0m: Zig support is not currently available, but is planed."
+        ),
+        ".rs" | ".rust" => println!(
+            "\x1b[1;31merror\x1b[0m: Rust support is not currently available, but is planed."
+        ),
+        _ => panic!(),
     }
-    println!(
-        "Native implementation successfully built to: \'{}\'",
-        native_file_name
-    );
+
+    println!("Native implementation successfully built to: \'{native_file_name}\'");
 }
